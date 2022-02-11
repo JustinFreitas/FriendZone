@@ -35,9 +35,40 @@ function addNPCHelper(nodeNPC, sName)
 	local nodeEntry, nodeLastMatch = addNPCHelperOriginal(nodeNPC, sName);
 	if nodeEntry and bIsCohort then
 		DB.setValue(nodeEntry, "link", "windowreference", "npc", nodeNPC.getPath());
-		DB.setValue(nodeEntry, "friendfoe", "string", "friend");
+		setCohortFaction(nodeEntry);
+		addCohortOfEffectIfEnabled(nodeEntry);
 	end
 	return nodeEntry, nodeLastMatch;
+end
+
+function setCohortFaction(nodeCohort)
+	-- Check DB node, and if available, use it for friendfoe status (if PC, assume friend.  if NPC, get status).
+	local nodeCommander = DB.findNode(DB.getValue(nodeCohort, "commandernodename", ""));
+	local sFaction = "friend";
+	if nodeCommander and not ActorManager.isPC(nodeCommander) then
+		-- Use NPC friendfoe.
+		sFaction = DB.getValue(nodeCommander, "friendfoe", sFaction);
+	end
+
+	DB.setValue(nodeCohort, "friendfoe", "string", sFaction);
+end
+
+function addCohortOfEffectIfEnabled(nodeCohort)
+	if not FriendZone.checkUseCohortEffectOption(nodeCohort) then return end
+
+	-- TODO: If effect option set, mark CT entry with 'Cohort of [ACTOR_NAME]', visible to all but in GM control.
+	local nodeCommander = DB.findNode(DB.getValue(nodeCohort, "commandernodename", ""));
+	local sCommanderName = ActorManager.getDisplayName(nodeCommander);
+	if sCommanderName ~= "" then
+		local rEffect = {
+			sName = "Cohort of " .. sCommanderName;
+			nInit = 0,
+			nDuration = 0,
+			nGMOnly = ActorManager.getFaction(nodeCohort) ~= "friend" and 1 or 0
+		};
+
+		EffectManager.addEffect("", "", nodeCohort, rEffect, false);
+	end
 end
 
 function addUnit(sClass, nodeUnit, sName)

@@ -6,4 +6,7 @@
 	<string name="menu_reparse_hitpoints">Reparse Hit Points</string>
 
 	<string name="assistant_gm_cohort_ownership">Unable reassign ownership of cohort.</string>
+
+	<string name="option_header_friendzone">Friend Zone (GM)</string>
+	<string name="option_label_friendzone_use_cohort_effect">CT: Use cohort effect</string>
 </root>

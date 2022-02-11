@@ -17,10 +17,13 @@
 	--account for cohort spell slots
 	--mulitples and naming?
 
-local onShortcutDropOriginal;
+FRIENDZONE_USE_COHORT_EFFECT = "FRIENDZONE_USE_COHORT_EFFECT";
 local notifyAddHolderOwnershipOriginal;
 
 function onInit()
+	OptionsManager.registerOption2(FRIENDZONE_USE_COHORT_EFFECT, false, "option_header_friendzone", "option_label_friendzone_use_cohort_effect", "option_entry_cycler",
+	{ labels = "option_val_off", values = "off", baselabel = "option_val_on", baseval = "on", default = "on" })
+
 	if AssistantGMManager then
 		notifyAddHolderOwnershipOriginal = AssistantGMManager.NotifyAddHolderOwnership;
 		AssistantGMManager.NotifyAddHolderOwnership = notifyAddHolderOwnership;
@@ -30,12 +33,9 @@ function onInit()
 	end
 end
 
-function onClose()
-	if Session.IsHost then
-		DB.removeHandler("charsheet.*.level", "onUpdate", onLevelChanged)
-	end
+function checkUseCohortEffectOption()
+	return OptionsManager.getOption(FRIENDZONE_USE_COHORT_EFFECT) == "on";
 end
-
 
 function onLevelChanged(nodeLevel)
 	local nodeChar = nodeLevel.getChild("..");
@@ -45,6 +45,8 @@ function onLevelChanged(nodeLevel)
 end
 
 function addCohort(nodeChar, nodeNPC)
+	if nodeChar == nodeNPC then return end  -- prevent 'source/target same node' DB error at copyNode()
+
 	local nodeCohorts = nodeChar.createChild("cohorts");
 	if not nodeCohorts then
 		return;
@@ -56,6 +58,8 @@ function addCohort(nodeChar, nodeNPC)
 	end
 
 	DB.copyNode(nodeNPC, nodeNewCohort);
+	-- TODO: For this, we'll need to override import/export to add/strip the values for that char.
+	DB.setValue(nodeNewCohort, "commandernodename", "string", nodeChar.getNodeName());
 	HpManagerFZ.updateNpcHitPoints(nodeNewCohort);
 	DB.setValue(nodeNewCohort, "hptotal", "number", DB.getValue(nodeNewCohort, "hp", 0));
 end
