@@ -57,6 +57,6 @@ Icons made by Freepik from www.flaticon.com
 		<icon name="FriendZone_icon" file="graphics/icons/FriendZone.png" />
 	</base>
 
-	<announcement text="Friend Zone v1.1 by MeAndUnique\rFork by Justin Freitas (2/6/22)" icon="FriendZone_icon" font="emotefont" />
+	<announcement text="Friend Zone v1.1 FGC/FGU, 2/6/22\rBy MeAndUnique with fork by Justin Freitas" icon="FriendZone_icon" font="emotefont" />
 
 </root>
