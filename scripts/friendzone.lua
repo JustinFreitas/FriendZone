@@ -3,9 +3,13 @@
 -- attribution and copyright information.
 --
 
+FRIENDZONE_USE_OF_EFFECT = "FRIENDZONE_USE_OF_EFFECT";
 local notifyAddHolderOwnershipOriginal;
 
 function onInit()
+	OptionsManager.registerOption2(FRIENDZONE_USE_OF_EFFECT, false, "option_header_friendzone", "option_label_friendzone_use_of_effect", "option_entry_cycler",
+	{ labels = "option_val_off", values = "off", baselabel = "option_val_on", baseval = "on", default = "on" })
+
 	if AssistantGMManager then
 		notifyAddHolderOwnershipOriginal = AssistantGMManager.NotifyAddHolderOwnership;
 		AssistantGMManager.NotifyAddHolderOwnership = notifyAddHolderOwnership;
@@ -13,6 +17,10 @@ function onInit()
 	if Session.IsHost then
 		DB.addHandler("charsheet.*.level", "onUpdate", onLevelChanged)
 	end
+end
+
+function checkUseOfEffectOption()
+	return OptionsManager.getOption(FRIENDZONE_USE_OF_EFFECT) == "on";
 end
 
 function onClose()
@@ -41,6 +49,7 @@ function addCohort(nodeChar, nodeNPC)
 	end
 
 	DB.copyNode(nodeNPC, nodeNewCohort);
+	DB.setValue(nodeNewCohort, "commandernodename", "string", nodeChar.getNodeName()); -- for effect option
 	HpManagerFZ.updateNpcHitPoints(nodeNewCohort);
 	DB.setValue(nodeNewCohort, "hptotal", "number", DB.getValue(nodeNewCohort, "hp", 0));
 end
@@ -57,6 +66,7 @@ function addUnit(nodeChar, nodeUnit)
 	end
 
 	DB.copyNode(nodeUnit, nodeNewUnit);
+	DB.setValue(nodeNewUnit, "commandernodename", "string", nodeChar.getNodeName()); -- for effect option
 
 	DB.setValue(nodeNewUnit, "commander", "string", DB.getValue(nodeChar, "name", ""));
 end
@@ -73,6 +83,7 @@ function addVehicle(nodeChar, nodeVehicle)
 	end
 
 	DB.copyNode(nodeVehicle, nodeNewVehicle);
+	DB.setValue(nodeNewVehicle, "commandernodename", "string", nodeChar.getNodeName()); -- for effect option
 end
 
 function isCohort(vRecord)

@@ -61,16 +61,38 @@ end
 function onNPCPostAdd(tCustom)
 	onNPCPostAddOriginal(tCustom);
 	trySetCohortLinkAndFaction(tCustom);
+    addOfEffectIfEnabled(tCustom, "Cohort")
 end
 
 function onVehiclePostAdd(tCustom)
 	onVehiclePostAddOriginal(tCustom);
 	trySetCohortLinkAndFaction(tCustom);
+    addOfEffectIfEnabled(tCustom, "Vehicle")
 end
 
 function addUnit(tCustom)
 	addUnitOriginal(tCustom);
 	trySetCohortLinkAndFaction(tCustom);
+    addOfEffectIfEnabled(tCustom, "Unit")
+end
+
+function addOfEffectIfEnabled(nodeRecord, sRecordType)
+	if not nodeRecord or
+       not nodeRecord.nodeCT or
+       not FriendZone.checkUseOfEffectOption() then return end
+
+    local nodeCommander = DB.findNode(DB.getValue(nodeRecord.nodeCT, "commandernodename", ""));
+	local sCommanderName = ActorManager.getDisplayName(nodeCommander);
+	if sCommanderName ~= "" then
+		local rEffect = {
+			sName = sRecordType .. " of " .. sCommanderName; -- i.e. Vehicle of Actor2
+			nInit = 0,
+			nDuration = 0,
+			nGMOnly = ActorManager.getFaction(nodeRecord.nodeCT) ~= "friend" and 1 or 0
+		};
+
+		EffectManager.addEffect("", "", nodeRecord.nodeCT, rEffect, false);
+	end
 end
 
 function trySetCohortLinkAndFaction(tCustom)
