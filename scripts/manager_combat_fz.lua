@@ -81,7 +81,7 @@ function addOfEffectIfEnabled(nodeRecord, sRecordType)
        not nodeRecord.nodeCT or
        not FriendZone.checkUseOfEffectOption() then return end
 
-    local nodeCommander = DB.findNode(DB.getValue(nodeRecord.nodeCT, "commandernodename", ""));
+    local nodeCommander = DB.findNode(DB.getValue(nodeRecord.nodeCT, "commandernodename", "")); -- for effect option
 	local sCommanderName = ActorManager.getDisplayName(nodeCommander);
 	if sCommanderName ~= "" then
 		local rEffect = {
