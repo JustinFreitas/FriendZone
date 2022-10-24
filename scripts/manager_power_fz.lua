@@ -244,7 +244,7 @@ function postProcessSave(rSave, nodeCommander)
 	elseif nType == COMMANDER_GROUP_ENCODING then
 		-- Tasha's templates typcially don't give either a class or a group, so Spell DC is assumed.
 		local nodePowerGroup = findCommanderPowerGroup(nodeCommander, "spell");
-		Debug.chat("group:",nodePowerGroup)
+		--Debug.chat("group:",nodePowerGroup)
 		if nodePowerGroup then
 			rSave.savemod = calculateCommanderGroupSaveDc(nodePowerGroup, nodeCommander);
 		end
