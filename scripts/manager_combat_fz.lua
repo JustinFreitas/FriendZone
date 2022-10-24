@@ -78,7 +78,7 @@ function setCohortFaction(nodeCohort)
 end
 
 function addCohortOfEffectIfEnabled(nodeCohort)
-	if not FriendZone.checkUseCohortEffectOption(nodeCohort) then return end
+	if not nodeCohort or not FriendZone.checkUseCohortEffectOption() then return end
 
 	-- TODO: If effect option set, mark CT entry with 'Cohort of [ACTOR_NAME]', visible to all but in GM control.
 	local nodeCommander = DB.findNode(DB.getValue(nodeCohort, "commandernodename", ""));
