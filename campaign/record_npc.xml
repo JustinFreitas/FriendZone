@@ -6,7 +6,8 @@
 -->
 
 <root>
-	<windowclass name="npc" merge="join">
+    <!-- TODO: Commented out due to 4.5.0 errors. For now, no NPC cohorts tab. -->
+	<!-- <windowclass name="npc" merge="join">
 		<sheetdata>
 			<subwindow_record name="cohorts">
 				<class>charsheet_cohorts</class>
@@ -26,7 +27,7 @@
 				</script>
 			</tabs_charsheet>
 		</sheetdata>
-	</windowclass>
+	</windowclass> -->
 
 	<windowclass name="npc_combat" merge="join">
 		<sheetdata>
