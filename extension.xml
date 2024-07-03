@@ -30,7 +30,7 @@ Icons made by Freepik from www.flaticon.com
 <root release="3.0" version="3">
 	<properties>
 		<name>Feature: Friend Zone</name>
-		<version>dev_version</version>
+		<version>v1.3.1</version>
 		<author>MeAndUnique</author>
 		<description>Adds support for companions of any sort.</description>
 		<loadorder>150</loadorder>
@@ -62,12 +62,12 @@ Icons made by Freepik from www.flaticon.com
 		<script name="PowerUpFZ">
 			function onInit()
 				if PowerUp then
-					PowerUp.registerExtension("Friend Zone", "dev_version");
+					PowerUp.registerExtension("Friend Zone", "v1.3.1");
 				end
 			end
 		</script>
 	</base>
 
-	<announcement text="Friend Zone dev_version by MeAndUnique." icon="FriendZone_icon" font="emotefont" />
+	<announcement text="Friend Zone v1.3.1 by MeAndUnique." icon="FriendZone_icon" font="emotefont" />
 
 </root>
