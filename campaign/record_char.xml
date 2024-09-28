@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<!-- 
-  Please see the license.html file included with this distribution for 
+<!--
+  Please see the license.html file included with this distribution for
   attribution and copyright information.
 -->
 
 <root>
 	<string name="tab_cohorts">Cohorts</string>
-	
+
 	<windowclass name="charsheet" merge="join">
 		<sheetdata>
 
