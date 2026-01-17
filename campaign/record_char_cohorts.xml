@@ -160,6 +160,12 @@
 			<genericcontrol name="rightanchor">
 				<anchored position="insidetopright" offset="0,2" height="0" width="0" />
 			</genericcontrol>
+			<button_idelete name="idelete">
+				<anchored to="rightanchor">
+					<top />
+					<right anchor="left" relation="relative" offset="-5" />
+				</anchored>
+			</button_idelete>
 			<linkcontrol name="shortcut">
 				<anchored to="rightanchor" width="20" height="20">
 					<top />
@@ -168,12 +174,6 @@
 				<class>npc</class>
 				<readonly />
 			</linkcontrol>
-			<button_idelete name="idelete">
-				<anchored to="rightanchor">
-					<top />
-					<right anchor="left" offset="-5" />
-				</anchored>
-			</button_idelete>
 
 			<string_textlistitem name="name">
 				<anchored to="rightanchor">
@@ -192,6 +192,12 @@
 			<genericcontrol name="rightanchor">
 				<anchored position="insidetopright" offset="0,2" height="0" width="0" />
 			</genericcontrol>
+			<button_idelete name="idelete">
+				<anchored to="rightanchor">
+					<top />
+					<right anchor="left" relation="relative" offset="-5" />
+				</anchored>
+			</button_idelete>
 			<linkcontrol name="shortcut">
 				<anchored to="rightanchor" width="20" height="20">
 					<top />
@@ -200,12 +206,6 @@
 				<class>reference_unit</class>
 				<readonly />
 			</linkcontrol>
-			<button_idelete name="idelete">
-				<anchored to="rightanchor">
-					<top />
-					<right anchor="left" offset="-5" />
-				</anchored>
-			</button_idelete>
 
 			<string_textlistitem name="name">
 				<anchored to="rightanchor">
