@@ -17,6 +17,7 @@ function onInit()
 	if Session.IsHost then
 		Comm.registerSlashHandler("subinit", CombatManagerFZ.processSubinitChatCommand);
 		Comm.registerSlashHandler("fzsync", processSyncCommand);
+		Comm.registerSlashHandler("fzfix", processFixCohortsCommand);
 		DB.addHandler("charsheet.*.level", "onUpdate", onLevelChanged)
 	end
 end
@@ -27,6 +28,49 @@ function processSyncCommand(sCommand, sParams)
 	else
 		ChatManager.SystemMessage("CombatManagerFZ.syncAllCohorts not found.");
 	end
+end
+
+function processFixCohortsCommand(sCommand, sParams)
+	local nFixed = 0;
+	local nTotal = 0;
+
+	for _,nodeChar in pairs(DB.getChildren("charsheet")) do
+		local nodeCohorts = nodeChar.getChild("cohorts");
+		if nodeCohorts then
+			for _,nodeCohort in pairs(DB.getChildren(nodeCohorts)) do
+				nTotal = nTotal + 1;
+				local bChanged = false;
+				
+				-- 1. Ensure commandernodename is set
+				local sCurrentCommander = DB.getValue(nodeCohort, "commandernodename", "");
+				local sNewCommander = nodeChar.getNodeName();
+				if sCurrentCommander ~= sNewCommander then
+					DB.setValue(nodeCohort, "commandernodename", "string", sNewCommander);
+					bChanged = true;
+				end
+				
+				-- 2. Recalculate HP
+				if HpManagerFZ then
+					HpManagerFZ.updateNpcHitPoints(nodeCohort);
+				end
+				
+				-- 3. Sync hptotal to hp
+				local nHP = DB.getValue(nodeCohort, "hp", 0);
+				local nHPTotal = DB.getValue(nodeCohort, "hptotal", 0);
+				if nHPTotal ~= nHP then
+					DB.setValue(nodeCohort, "hptotal", "number", nHP);
+					-- We consider this a fix/update
+					bChanged = true; 
+				end
+				
+				if bChanged then
+					nFixed = nFixed + 1;
+				end
+			end
+		end
+	end
+	
+	ChatManager.SystemMessage("FriendZone: Examined " .. nTotal .. " cohorts. Updated " .. nFixed .. ".");
 end
 
 function checkUseCohortEffectOption()
