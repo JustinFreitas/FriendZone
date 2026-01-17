@@ -52,7 +52,9 @@
 				<activate />
 				<fastinit />
 			</subwindow>
-			<scrollbar_charcontents />
+			<scrollbar>
+				<target>contents</target>
+			</scrollbar>
 		</sheetdata>
 	</windowclass>
 
@@ -86,7 +88,7 @@
 					function update()
 						local bEdit = (window.parentcontrol.window.cohorts_iedit.getValue() == 1);
 						for _,w in ipairs(getWindows()) do
-							w.idelete.setVisibility(bEdit);
+							w.idelete.setVisible(bEdit);
 						end
 					end
 
@@ -130,7 +132,7 @@
 					function update()
 						local bEdit = (window.parentcontrol.window.cohorts_iedit.getValue() == 1);
 						for _,w in ipairs(getWindows()) do
-							w.idelete.setVisibility(bEdit);
+							w.idelete.setVisible(bEdit);
 						end
 					end
 

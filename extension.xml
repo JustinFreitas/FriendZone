@@ -29,11 +29,11 @@ Icons made by Freepik from www.flaticon.com
 
 <root version="3.0">
 	<properties>
-		<name>Feature: Friend Zone</name>
+		<name>Friend Zone</name>
 		<version>1.1.2</version>
 		<author>MeAndUnique</author>
 		<description>Adds support for companions of any sort.</description>
-		<loadorder>150</loadorder>
+		<loadorder>9000</loadorder>
 		<ruleset>
 			<name>5E</name>
 		</ruleset>

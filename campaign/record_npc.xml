@@ -8,44 +8,38 @@
 <root>
 	<windowclass name="npc" merge="join">
 		<sheetdata>
-			<subwindow_record name="cohorts">
-				<class>charsheet_cohorts</class>
-				<invisible />
-			</subwindow_record>
-
-			<scrollbar_record>
-				<target>cohorts</target>
-			</scrollbar_record>
-
-			<tabs_charsheet name="tabs">
-				<script>
-					function onInit()
-						super.onInit();
-						addTab("cohorts", "tab_cohorts", false);
-					end
-				</script>
-			</tabs_charsheet>
+			<tabs_recordsheet name="tabs">
+				<tabverticaltextoffsetx>3</tabverticaltextoffsetx>
+			</tabs_recordsheet>
 		</sheetdata>
+		<tab merge="add">
+			<name>cohorts</name>
+			<resource>tab_cohorts</resource>
+			<class>charsheet_cohorts</class>
+			<embed />
+		</tab>
 	</windowclass>
 
-	<windowclass name="npc_combat" merge="join">
+	<windowclass name="npc_combat_top_2014" merge="join">
 		<sheetdata>
-			<number_column name="hp">
+			<basicnumber name="hp" merge="join">
 				<script>
 					function onInit()
+						if super and super.onInit then
+							super.onInit();
+						end
 						registerMenuItem(Interface.getString("menu_reparse_hitpoints"), "spell_heal", 3);
 					end
 					function onMenuSelection(selection)
 						if selection == 3 then
 							HpManagerFZ.updateNpcHitPoints(window.getDatabaseNode());
 						end
+						if super and super.onMenuSelection then
+							super.onMenuSelection(selection);
+						end
 					end
 				</script>
-			</number_column>
-
-			<string_columnh name="skills" >
-				<script file="campaign/scripts/npc_skill.lua" />
-			</string_columnh>
+			</basicnumber>
 		</sheetdata>
 	</windowclass>
 </root>

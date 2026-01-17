@@ -6,5 +6,5 @@
 -->
 
 <root>
-	<icon name="tab_cohorts" file="graphics/tabs/tab_cohorts.png" />
+	<icon name="tab_cohorts_icon" file="graphics/tabs/tab_cohorts.png" />
 </root>
