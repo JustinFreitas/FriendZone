@@ -11,6 +11,9 @@ local addNPCHelperOriginal;
 local rollInitOriginal;
 local rollInit2Original;
 local rollEntryInitOriginal;
+local resetInitOriginal;
+
+local _bInClearSort = false;
 
 function onInit()
     if not CombatManager then
@@ -35,6 +38,9 @@ function onInit()
 	rollEntryInitOriginal = CombatManager.rollEntryInit;
 	CombatManager.rollEntryInit = rollEntryInitFZ;
 
+	resetInitOriginal = CombatManager.resetInit;
+	CombatManager.resetInit = resetInitFZ;
+
 	if CombatRecordManager then
 		onNPCPostAddOriginal = CombatRecordManager.getRecordTypePostAddCallback("npc");
 		CombatRecordManager.setRecordTypePostAddCallback("npc", onNPCPostAdd);
@@ -57,17 +63,27 @@ end
 
 function rollInitFZ(tCustom)
     if rollInitOriginal then rollInitOriginal(tCustom); end
-    syncAllCohorts(false);
+    syncAllCohorts(true);
+end
+
+function resetInitFZ()
+	_bInClearSort = true;
+	if resetInitOriginal then resetInitOriginal(); end
+	syncAllCohorts(true);
+	
+	-- Force a resort of the CT list after clearing and syncing
+	if CombatManager.sortCombatantList then
+		CombatManager.sortCombatantList();
+	end
+	_bInClearSort = false;
 end
 
 function rollInit2FZ(tCustom)
     if rollInit2Original then rollInit2Original(tCustom); end
-    syncAllCohorts(false);
+    syncAllCohorts(true);
 end
 
 function syncAllCohorts(bVerbose)
-    if bVerbose then Debug.console("FZ: Starting Manual Sync (Optimized)..."); end
-    
     -- Pass 1: Gather Commander Inits
     local tCommanderInits = {};
     for _,nodeCT in pairs(DB.getChildren(CombatManager.CT_LIST)) do
@@ -85,22 +101,16 @@ function syncAllCohorts(bVerbose)
         local sMyCommander = DB.getValue(nodeCT, "commandernodename", "");
         if sMyCommander ~= "" then
             sMyCommander = sMyCommander:match("^%s*(.-)%s*$");
-            
             if tCommanderInits[sMyCommander] then
-                if bVerbose then Debug.console("FZ SYNC: " .. nodeCT.getName() .. " -> " .. tCommanderInits[sMyCommander]); end
                 DB.setValue(nodeCT, "initresult", "number", tCommanderInits[sMyCommander]);
-            else
-                 if bVerbose then Debug.console("FZ SKIP: " .. nodeCT.getName() .. " commander not found: " .. sMyCommander); end
             end
         end
     end
-
-    if bVerbose then Debug.console("FZ: Sync Complete."); end
 end
 
 function rollEntryInitFZ(nodeEntry)
     if rollEntryInitOriginal then rollEntryInitOriginal(nodeEntry); end
-    fixCohortInit(nodeEntry, false);
+    fixCohortInit(nodeEntry, true);
 end
 
 function hex_dump(str)
@@ -119,8 +129,6 @@ function fixCohortInit(nodeCohort, bVerbose)
 	if sMyCommanderNodeName ~= "" then
 		sMyCommanderNodeName = sMyCommanderNodeName:match("^%s*(.-)%s*$");
 		
-		if bVerbose then Debug.console("FZ CHECK: " .. nodeCohort.getName() .. " seeking " .. sMyCommanderNodeName); end
-		
 		for _,nodeCT in pairs(DB.getChildren(CombatManager.CT_LIST)) do
 			local sClass, sRecord = DB.getValue(nodeCT, "link");
 			if sRecord and type(sRecord) == "string" then 
@@ -128,14 +136,11 @@ function fixCohortInit(nodeCohort, bVerbose)
 				
 				if sRecord == sMyCommanderNodeName then
 					local nCommanderInit = DB.getValue(nodeCT, "initresult", 0);
-					if bVerbose then Debug.console("   MATCH: Found Commander (" .. ActorManager.getDisplayName(nodeCT) .. ") Init: " .. nCommanderInit); end
 					DB.setValue(nodeCohort, "initresult", "number", nCommanderInit);
 					return;
 				end
 			end
 		end
-		
-		if bVerbose then Debug.console("   FAIL: Commander not found."); end
 	end
 end
 
@@ -312,9 +317,11 @@ function onInitResultChanged(nodeField)
 	local sRegex = "^" .. sMsgSafeName .. "'s?.*$";
 	
 	-- Iterate all CT nodes to find cohorts
+	local bFoundCohort = false;
 	for _,nodeCT in pairs(DB.getChildren(CombatManager.CT_LIST)) do
 		if nodeCT ~= nodeCommander then
 			local bMatch = false;
+			local sMatchType = "";
 			
 			-- Check Link (Authoritative)
 			local sCohortCommander = DB.getValue(nodeCT, "commandernodename", "");
@@ -322,6 +329,7 @@ function onInitResultChanged(nodeField)
 			
 			if sCohortCommander and sCohortCommander ~= "" and sCohortCommander == sRecord then
 				bMatch = true;
+				sMatchType = "Link";
 			end
 			
 			-- Check Regex (Fallback)
@@ -329,11 +337,14 @@ function onInitResultChanged(nodeField)
 				local sSubName = ActorManager.getDisplayName(nodeCT);
 				if string.match(sSubName, sRegex) then
 					bMatch = true;
+					sMatchType = "Regex";
 				end
 			end
 			
 			if bMatch then
-				if DB.getValue(nodeCT, "initresult", 0) ~= nNewInit then
+				bFoundCohort = true;
+				local nOldInit = DB.getValue(nodeCT, "initresult", 0);
+				if nOldInit ~= nNewInit then
 					bUpdating = true;
 					DB.setValue(nodeCT, "initresult", "number", nNewInit);
 					bUpdating = false;
@@ -343,10 +354,48 @@ function onInitResultChanged(nodeField)
 	end
 end
 
+function getGroupLeaderFZ(nodeCT)
+	local sCommanderPath = DB.getValue(nodeCT, "commandernodename", "");
+	if sCommanderPath == "" then
+		return nodeCT;
+	end
+	
+	for _, nodeEntry in pairs(DB.getChildren(CombatManager.CT_LIST)) do
+		local sClass, sRecord = DB.getValue(nodeEntry, "link");
+		if sRecord and sRecord ~= "" then
+			sRecord = sRecord:match("^%s*(.-)%s*$");
+			if sRecord == sCommanderPath then
+				return nodeEntry;
+			end
+		end
+	end
+	
+	return nodeCT;
+end
+
 function onSortCompareFZ(node1, node2)
 	local nInit1 = DB.getValue(node1, "initresult", 0);
 	local nInit2 = DB.getValue(node2, "initresult", 0);
 	
+	-- [NEW] Special Grouping Sort for "Clear All" mode
+	if _bInClearSort and nInit1 == nInit2 then
+		local nodeLeader1 = getGroupLeaderFZ(node1);
+		local nodeLeader2 = getGroupLeaderFZ(node2);
+		
+		if nodeLeader1 ~= nodeLeader2 then
+			local sName1 = DB.getValue(nodeLeader1, "name", "");
+			local sName2 = DB.getValue(nodeLeader2, "name", "");
+			if sName1 ~= sName2 then
+				return sName1 < sName2;
+			end
+			return nodeLeader1.getPath() < nodeLeader2.getPath();
+		end
+		
+		-- Same group: Commander priority (cohorts on top per current roll-all logic)
+		if node1 == nodeLeader1 then return false; end
+		if node2 == nodeLeader2 then return true; end
+	end
+
 	if nInit1 == nInit2 then
 		local sCmdr1 = DB.getValue(node1, "commandernodename", "");
 		local sCmdr2 = DB.getValue(node2, "commandernodename", "");
@@ -364,12 +413,12 @@ function onSortCompareFZ(node1, node2)
 		
 		-- Node1 is Commander of Node2? (Check Node2's commander against Node1's link)
 		if sCmdr2 and sCmdr2 ~= "" and sCmdr2 == sRecord1 then
-			return false; -- Node1 (Commander) comes first
+			return false; -- Node1 (Commander) comes after (Cohort on top)
 		end
 		
 		-- Node2 is Commander of Node1? (Check Node1's commander against Node2's link)
 		if sCmdr1 and sCmdr1 ~= "" and sCmdr1 == sRecord2 then
-			return true; -- Node2 (Commander) comes first
+			return true; -- Node2 (Commander) comes after (Cohort on top)
 		end
 	end
 	
