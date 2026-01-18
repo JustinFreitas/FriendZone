@@ -109,17 +109,6 @@ function rollEntryInitFZ(nodeEntry)
     fixCohortInit(nodeEntry, true);
 end
 
-function hex_dump(str)
-    if not str then return "nil" end;
-    local len = string.len(str)
-    local hex = ""
-    for i = 1, len do
-        local ord = string.byte(str, i)
-        hex = hex .. string.format("%02X ", ord)
-    end
-    return hex
-end
-
 function fixCohortInit(nodeCohort, bVerbose)
 	local sMyCommanderNodeName = DB.getValue(nodeCohort, "commandernodename", "");
 	if sMyCommanderNodeName ~= "" then
