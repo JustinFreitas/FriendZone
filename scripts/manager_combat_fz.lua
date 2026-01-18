@@ -66,29 +66,6 @@ end
 
 function resetInitFZ()
 	if resetInitOriginal then resetInitOriginal(); end
-
-	-- Gather all combatants
-	local tCombatants = {};
-	for _, node in pairs(DB.getChildren(CombatManager.CT_LIST)) do
-		table.insert(tCombatants, node);
-	end
-	
-	-- Sort alphabetically by name to define fallback order
-	table.sort(tCombatants, function(a, b)
-		return (DB.getValue(a, "name", ""):lower()) < (DB.getValue(b, "name", ""):lower());
-	end);
-	
-	-- Assign tiny unique initiatives to commanders/solo PCs to force grouping
-	-- Higher rank = higher initiative = top of list
-	local nCount = #tCombatants;
-	for i, node in ipairs(tCombatants) do
-		local sCmdrPath = DB.getValue(node, "commandernodename", "");
-		if sCmdrPath == "" then
-			local nInit = (nCount - i + 1) * 0.0001; 
-			DB.setValue(node, "initresult", "number", nInit);
-		end
-	end
-	
 	syncAllCohorts(false);
 	
 	-- Force a resort
@@ -373,11 +350,43 @@ function onInitResultChanged(nodeField)
 	end
 end
 
+function getGroupLeaderFZ(nodeCT)
+	local sCommanderPath = DB.getValue(nodeCT, "commandernodename", "");
+	if sCommanderPath == "" then
+		return nodeCT;
+	end
+	
+	for _, nodeEntry in pairs(DB.getChildren(CombatManager.CT_LIST)) do
+		local sClass, sRecord = DB.getValue(nodeEntry, "link");
+		if sRecord and sRecord ~= "" then
+			sRecord = sRecord:match("^%s*(.-)%s*$");
+			if sRecord == sCommanderPath then
+				return nodeEntry;
+			end
+		end
+	end
+	
+	return nodeCT;
+end
+
 function onSortCompareFZ(node1, node2)
 	local nInit1 = DB.getValue(node1, "initresult", 0);
 	local nInit2 = DB.getValue(node2, "initresult", 0);
 	
 	if nInit1 == nInit2 then
+		local nodeLeader1 = getGroupLeaderFZ(node1);
+		local nodeLeader2 = getGroupLeaderFZ(node2);
+		
+		if nodeLeader1 ~= nodeLeader2 then
+			local sName1 = DB.getValue(nodeLeader1, "name", "");
+			local sName2 = DB.getValue(nodeLeader2, "name", "");
+			if sName1 ~= sName2 then
+				return sName1 < sName2;
+			end
+			return nodeLeader1.getPath() < nodeLeader2.getPath();
+		end
+
+		-- Same group: Commander vs Cohort logic
 		local sCmdr1 = DB.getValue(node1, "commandernodename", "");
 		local sCmdr2 = DB.getValue(node2, "commandernodename", "");
 		
@@ -392,12 +401,12 @@ function onSortCompareFZ(node1, node2)
 		if sRecord1 then sRecord1 = sRecord1:match("^%s*(.-)%s*$"); end
 		if sRecord2 then sRecord2 = sRecord2:match("^%s*(.-)%s*$"); end
 		
-		-- Node1 is Commander of Node2? (Check Node2's commander against Node1's link)
+		-- Node1 is Commander of Node2?
 		if sCmdr2 and sCmdr2 ~= "" and sCmdr2 == sRecord1 then
 			return false; -- Node1 (Commander) comes after (Cohort on top)
 		end
 		
-		-- Node2 is Commander of Node1? (Check Node1's commander against Node2's link)
+		-- Node2 is Commander of Node1?
 		if sCmdr1 and sCmdr1 ~= "" and sCmdr1 == sRecord2 then
 			return true; -- Node2 (Commander) comes after (Cohort on top)
 		end
