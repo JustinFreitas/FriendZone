@@ -29,6 +29,7 @@ function onInit()
 end
 
 function parseNPCPower(nodePower, bAllowSpellDataOverride)
+	nodeCohort = nil;
 	local nodeNPC = nodePower.getChild("...");
 	if FriendZone.isCohort(nodeNPC) then
 		nodeCohort = nodeNPC;
@@ -37,7 +38,7 @@ function parseNPCPower(nodePower, bAllowSpellDataOverride)
 end
 
 function parsePower(sPowerName, sPowerDesc, bPC, bMagic)
-	if nodeCohort then
+	if nodeCohort and sPowerDesc then
 		sPowerDesc = sPowerDesc:gsub("[%+%-]%d+ %+ ?PB", encodeNumericAddition);
 		sPowerDesc = sPowerDesc:gsub("%d+d%d+ %+ ?PB", encodeDiceAddition);
 		sPowerDesc = sPowerDesc:gsub("a DC %d+ [p%+]l?u?s? ?PB", encodeNumericReplacement);
@@ -330,7 +331,7 @@ function findCommanderPowerGroup(nodeCohort, nodeCommander)
 end
 
 function calculateCommanderGroupSaveDc(nodePowerGroup, nodeCommander)
-	local rCommander ActorManager.resolveActor(nodeCommander);
+	local rCommander = ActorManager.resolveActor(nodeCommander);
 	local sSaveDCStat = DB.getValue(nodePowerGroup, "savestat", "");
 	if sSaveDCStat == "" then
 		sSaveDCStat = DB.getValue(nodePowerGroup, "stat", "");
@@ -347,7 +348,7 @@ function calculateCommanderGroupSaveDc(nodePowerGroup, nodeCommander)
 end
 
 function calculateCommanderGroupAttackModifier(nodePowerGroup, nodeCommander)
-	local rCommander ActorManager.resolveActor(nodeCommander);
+	local rCommander = ActorManager.resolveActor(nodeCommander);
 	local sAttackStat = DB.getValue(nodePowerGroup, "atkstat", "");
 	if sAttackStat == "" then
 		sAttackStat = DB.getValue(nodePowerGroup, "stat", "");
