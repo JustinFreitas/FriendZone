@@ -13,8 +13,6 @@ local rollInit2Original;
 local rollEntryInitOriginal;
 local resetInitOriginal;
 
-local _bInClearSort = false;
-
 function onInit()
     if not CombatManager then
         Debug.console("FZ ERROR: CombatManager not found. Aborting.");
@@ -67,15 +65,36 @@ function rollInitFZ(tCustom)
 end
 
 function resetInitFZ()
-	_bInClearSort = true;
 	if resetInitOriginal then resetInitOriginal(); end
-	syncAllCohorts(true);
+
+	-- Gather all combatants
+	local tCombatants = {};
+	for _, node in pairs(DB.getChildren(CombatManager.CT_LIST)) do
+		table.insert(tCombatants, node);
+	end
 	
-	-- Force a resort of the CT list after clearing and syncing
+	-- Sort alphabetically by name to define fallback order
+	table.sort(tCombatants, function(a, b)
+		return (DB.getValue(a, "name", ""):lower()) < (DB.getValue(b, "name", ""):lower());
+	end);
+	
+	-- Assign tiny unique initiatives to commanders/solo PCs to force grouping
+	-- Higher rank = higher initiative = top of list
+	local nCount = #tCombatants;
+	for i, node in ipairs(tCombatants) do
+		local sCmdrPath = DB.getValue(node, "commandernodename", "");
+		if sCmdrPath == "" then
+			local nInit = (nCount - i + 1) * 0.0001; 
+			DB.setValue(node, "initresult", "number", nInit);
+		end
+	end
+	
+	syncAllCohorts(false);
+	
+	-- Force a resort
 	if CombatManager.sortCombatantList then
 		CombatManager.sortCombatantList();
 	end
-	_bInClearSort = false;
 end
 
 function rollInit2FZ(tCustom)
@@ -354,48 +373,10 @@ function onInitResultChanged(nodeField)
 	end
 end
 
-function getGroupLeaderFZ(nodeCT)
-	local sCommanderPath = DB.getValue(nodeCT, "commandernodename", "");
-	if sCommanderPath == "" then
-		return nodeCT;
-	end
-	
-	for _, nodeEntry in pairs(DB.getChildren(CombatManager.CT_LIST)) do
-		local sClass, sRecord = DB.getValue(nodeEntry, "link");
-		if sRecord and sRecord ~= "" then
-			sRecord = sRecord:match("^%s*(.-)%s*$");
-			if sRecord == sCommanderPath then
-				return nodeEntry;
-			end
-		end
-	end
-	
-	return nodeCT;
-end
-
 function onSortCompareFZ(node1, node2)
 	local nInit1 = DB.getValue(node1, "initresult", 0);
 	local nInit2 = DB.getValue(node2, "initresult", 0);
 	
-	-- [NEW] Special Grouping Sort for "Clear All" mode
-	if _bInClearSort and nInit1 == nInit2 then
-		local nodeLeader1 = getGroupLeaderFZ(node1);
-		local nodeLeader2 = getGroupLeaderFZ(node2);
-		
-		if nodeLeader1 ~= nodeLeader2 then
-			local sName1 = DB.getValue(nodeLeader1, "name", "");
-			local sName2 = DB.getValue(nodeLeader2, "name", "");
-			if sName1 ~= sName2 then
-				return sName1 < sName2;
-			end
-			return nodeLeader1.getPath() < nodeLeader2.getPath();
-		end
-		
-		-- Same group: Commander priority (cohorts on top per current roll-all logic)
-		if node1 == nodeLeader1 then return false; end
-		if node2 == nodeLeader2 then return true; end
-	end
-
 	if nInit1 == nInit2 then
 		local sCmdr1 = DB.getValue(node1, "commandernodename", "");
 		local sCmdr2 = DB.getValue(node2, "commandernodename", "");
