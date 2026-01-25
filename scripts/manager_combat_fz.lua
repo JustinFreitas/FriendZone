@@ -370,7 +370,7 @@ function onSortCompareFZ(node1, node2)
 			local sName1 = DB.getValue(nodeLeader1, "name", "");
 			local sName2 = DB.getValue(nodeLeader2, "name", "");
 			if sName1 ~= sName2 then
-				return sName1 < sName2;
+				return sName1 > sName2;
 			end
 			return nodeLeader1.getPath() < nodeLeader2.getPath();
 		end
@@ -411,5 +411,5 @@ function onSortCompareFZ(node1, node2)
 	end
 	local sName1 = DB.getValue(node1, "name", "");
 	local sName2 = DB.getValue(node2, "name", "");
-	return sName1 < sName2;
+	return sName1 > sName2;
 end
