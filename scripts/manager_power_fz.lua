@@ -18,6 +18,14 @@ local MULTIPLY_PROFICIENCY_ENCODING = 3;
 local DICE_PROFICIENCY_ENCODING = 4;
 local MULTIPLY_LEVEL_ENCODING = 5;
 
+-- Helper to safely get an actor from a node/string, preferring the modern getActor method.
+local function getActorSafe(v)
+    if ActorManager.getActor then
+        return ActorManager.getActor(v)
+    end
+    return ActorManager.resolveActor(v)
+end
+
 local aStoredNames = {};
 
 function onInit()
@@ -331,7 +339,7 @@ function findCommanderPowerGroup(nodeCohort, nodeCommander)
 end
 
 function calculateCommanderGroupSaveDc(nodePowerGroup, nodeCommander)
-	local rCommander = ActorManager.resolveActor(nodeCommander);
+	local rCommander = getActorSafe(nodeCommander);
 	local sSaveDCStat = DB.getValue(nodePowerGroup, "savestat", "");
 	if sSaveDCStat == "" then
 		sSaveDCStat = DB.getValue(nodePowerGroup, "stat", "");

@@ -6,6 +6,14 @@
 FRIENDZONE_USE_COHORT_EFFECT = "FRIENDZONE_USE_COHORT_EFFECT";
 local notifyAddHolderOwnershipOriginal;
 
+-- Helper to safely get an actor from a node/string, preferring the modern getActor method.
+local function getActorSafe(v)
+    if ActorManager.getActor then
+        return ActorManager.getActor(v)
+    end
+    return ActorManager.resolveActor(v)
+end
+
 function onInit()
 	OptionsManager.registerOption2(FRIENDZONE_USE_COHORT_EFFECT, false, "option_header_friendzone", "option_label_friendzone_use_cohort_effect", "option_entry_cycler",
 	{ labels = "option_val_off", values = "off", baselabel = "option_val_on", baseval = "on", default = "on" })

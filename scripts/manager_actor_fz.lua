@@ -8,6 +8,19 @@ local getSaveOriginal;
 local getCheckOriginal;
 local getDefenseValueOriginal;
 
+-- Helper to safely get the target node type and node, preferring modern methods.
+local function getTypeAndNodeSafe(v)
+    if ActorManager.isPC and ActorManager.getCreatureNode and ActorManager.getCTNode then
+        local bIsPC = ActorManager.isPC(v)
+        if bIsPC then
+            return "pc", ActorManager.getCreatureNode(v)
+        else
+            return "ct", ActorManager.getCTNode(v) or ActorManager.getCreatureNode(v)
+        end
+    end
+    return ActorManager.getTypeAndNode(v)
+end
+
 function onInit()
 	getActorRecordTypeFromPathOriginal = ActorManager.getActorRecordTypeFromPath;
 	ActorManager.getActorRecordTypeFromPath = getActorRecordTypeFromPath;
@@ -35,7 +48,7 @@ function getActorRecordTypeFromPath(sActorNodePath)
 end
 
 function getSave(rActor, sSave)
-	local sNodeType, nodeActor = ActorManager.getTypeAndNode(rActor);
+	local sNodeType, nodeActor = getTypeAndNodeSafe(rActor);
 	if not nodeActor then
 		return 0, false, false, "";
 	end
@@ -54,7 +67,7 @@ function getSave(rActor, sSave)
 end
 
 function getCheck(rActor, sCheck, sSkill)
-	local sNodeType, nodeActor = ActorManager.getTypeAndNode(rActor);
+	local sNodeType, nodeActor = getTypeAndNodeSafe(rActor);
 	if not nodeActor then
 		return 0, false, false, "";
 	end
