@@ -26,6 +26,30 @@ local function getActorSafe(v)
     return ActorManager.resolveActor(v)
 end
 
+-- Helper to safely get an actor's type and node, preferring the modern getTypeAndNode method.
+local function getTypeAndNodeSafe(v)
+    if ActorManager.getTypeAndNode then
+        return ActorManager.getTypeAndNode(v)
+    end
+    return ActorManager.getActorTypeAndNode(v)
+end
+
+-- Helper to safely fetch ability bonuses from the 5E ruleset.
+local function getAbilityBonusSafe(nodeActor, sAbility)
+    if ActorManager5E and ActorManager5E.getAbilityBonus then
+        return ActorManager5E.getAbilityBonus(nodeActor, sAbility)
+    end
+    return 0
+end
+
+-- Helper to safely fetch class levels from the 5E ruleset.
+local function getClassLevelSafe(nodeActor, sClass)
+    if ActorManager5E and ActorManager5E.getClassLevel then
+        return ActorManager5E.getClassLevel(nodeActor, sClass)
+    end
+    return 0
+end
+
 local aStoredNames = {};
 
 function onInit()
@@ -42,7 +66,9 @@ function parseNPCPower(nodePower, bAllowSpellDataOverride)
 	if FriendZone.isCohort(nodeNPC) then
 		nodeCohort = nodeNPC;
 	end
-	return parseNPCPowerOriginal(nodePower, bAllowSpellDataOverride)
+    if parseNPCPowerOriginal then
+	    return parseNPCPowerOriginal(nodePower, bAllowSpellDataOverride)
+    end
 end
 
 function parsePower(sPowerName, sPowerDesc, bPC, bMagic)
@@ -59,7 +85,10 @@ function parsePower(sPowerName, sPowerDesc, bPC, bMagic)
 		sPowerDesc = sPowerDesc:gsub("equal to %d+ times the %w+%'?s? level", encodeNumericLevelMultiplication);
 	end
 
-	local aMasterAbilities = parsePowerOriginal(sPowerName, sPowerDesc, bPC, bMagic)
+    local aMasterAbilities = {}
+    if parsePowerOriginal then
+	    aMasterAbilities = parsePowerOriginal(sPowerName, sPowerDesc, bPC, bMagic)
+    end
 
 	if nodeCohort then
 		local nodeCommander = FriendZone.getCommanderNode(nodeCohort);
@@ -105,8 +134,7 @@ end
 
 function encodeDiceAddition(sMatch)
 	local sDice = sMatch:match("^%d+d%d+");
-	local nProfBonusStringLength = sMatch:len() - sDice:len() - 1;
-	local nLengthDiff = nProfBonusStringLength - (1 + ENCODING_LENGTH);
+	local nLengthDiff = sMatch:len() - sDice:len() - 1 - (1 + ENCODING_LENGTH);
 	local nMod = calculateEncoding(ADD_PROFICIENCY_ENCODING, 0, nLengthDiff);
 	return sDice .. " +" .. nMod;
 end
@@ -215,7 +243,7 @@ function postProcessDamageAndHeal(rDamage, nodeCohort, nodeCommander)
 				local sClass = aStoredNames[nIndex];
 				local nLevels;
 				if StringManager.contains(DataCommon.classes, sClass) then
-					nLevels = ActorManager5E.getClassLevel(nodeCommander, sClass);
+					nLevels = getClassLevelSafe(nodeCommander, sClass);
 				else
 					nLevels = DB.getValue(nodeCommander, "level", 0);
 				end
@@ -347,16 +375,16 @@ function calculateCommanderGroupSaveDc(nodePowerGroup, nodeCommander)
 
 	local nDC = 8 + DB.getValue(nodePowerGroup, "savemod", 0);
 	if (sSaveDCStat or "") ~= "" then
-		nDC = nDC + ActorManager5E.getAbilityBonus(nodeCommander, sSaveDCStat);
+		nDC = nDC + getAbilityBonusSafe(nodeCommander, sSaveDCStat);
 	end
 	if DB.getValue(nodePowerGroup, "saveprof", 1) == 1 then
-		nDC = nDC + ActorManager5E.getAbilityBonus(nodeCommander, "prf");
+		nDC = nDC + getAbilityBonusSafe(nodeCommander, "prf");
 	end
 	return nDC;
 end
 
 function calculateCommanderGroupAttackModifier(nodePowerGroup, nodeCommander)
-	local rCommander = ActorManager.resolveActor(nodeCommander);
+	local rCommander = getActorSafe(nodeCommander);
 	local sAttackStat = DB.getValue(nodePowerGroup, "atkstat", "");
 	if sAttackStat == "" then
 		sAttackStat = DB.getValue(nodePowerGroup, "stat", "");
@@ -364,10 +392,10 @@ function calculateCommanderGroupAttackModifier(nodePowerGroup, nodeCommander)
 
 	local nModifier = DB.getValue(nodePowerGroup, "atkmod", 0);
 	if (sAttackStat or "") ~= "" then
-		nModifier = nModifier + ActorManager5E.getAbilityBonus(nodeCommander, sAttackStat);
+		nModifier = nModifier + getAbilityBonusSafe(nodeCommander, sAttackStat);
 	end
 	if DB.getValue(nodePowerGroup, "atkprof", 1) == 1 then
-		nModifier = nModifier + ActorManager5E.getAbilityBonus(nodeCommander, "prf");
+		nModifier = nModifier + getAbilityBonusSafe(nodeCommander, "prf");
 	end
 	return nModifier;
 end

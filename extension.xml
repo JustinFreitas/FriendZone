@@ -30,7 +30,7 @@ Icons made by Freepik from www.flaticon.com
 <root version="3.0">
 	<properties>
 		<name>Friend Zone</name>
-		<version>2.0.1</version>
+		<version>2.1</version>
 		<author>MeAndUnique</author>
 		<description>Adds support for companions of any sort.</description>
 		<loadorder>9000</loadorder>
@@ -60,6 +60,6 @@ Icons made by Freepik from www.flaticon.com
 		<icon name="FriendZone_icon" file="graphics/icons/FriendZone.png" />
 	</base>
 
-	<announcement text="Friend Zone v2.0.1 FGC/FGU, 5/3/26\rBy MeAndUnique with fork by Justin Freitas" icon="FriendZone_icon" font="emotefont" />
+	<announcement text="Friend Zone v2.1 FGC/FGU, 5/4/26\rBy MeAndUnique with fork by Justin Freitas" icon="FriendZone_icon" font="emotefont" />
 
 </root>

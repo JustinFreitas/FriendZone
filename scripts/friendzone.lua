@@ -14,6 +14,22 @@ local function getActorSafe(v)
     return ActorManager.resolveActor(v)
 end
 
+-- Helper to safely get an actor's type and node, preferring the modern getTypeAndNode method.
+local function getTypeAndNodeSafe(v)
+    if ActorManager.getTypeAndNode then
+        return ActorManager.getTypeAndNode(v)
+    end
+    return ActorManager.getActorTypeAndNode(v)
+end
+
+-- Helper to safely check for effects, preferring the 5E-specific EffectManager5E if available.
+local function hasEffectSafe(rActor, sEffect)
+    if EffectManager5E and EffectManager5E.hasEffect then
+        return EffectManager5E.hasEffect(rActor, sEffect)
+    end
+    return EffectManager.hasEffect(rActor, sEffect)
+end
+
 function onInit()
 	OptionsManager.registerOption2(FRIENDZONE_USE_COHORT_EFFECT, false, "option_header_friendzone", "option_label_friendzone_use_cohort_effect", "option_entry_cycler",
 	{ labels = "option_val_off", values = "off", baselabel = "option_val_on", baseval = "on", default = "on" })
@@ -188,7 +204,9 @@ function addCohort(nodeChar, nodeNPC)
 
 	-- TODO: For this, we'll need to override import/export to add/strip the values for that char.
 	DB.setValue(nodeNewCohort, "commandernodename", "string", nodeChar.getNodeName());
-	HpManagerFZ.updateNpcHitPoints(nodeNewCohort);
+	if HpManagerFZ then
+		HpManagerFZ.updateNpcHitPoints(nodeNewCohort);
+	end
 	DB.setValue(nodeNewCohort, "hptotal", "number", DB.getValue(nodeNewCohort, "hp", 0));
 end
 
@@ -209,7 +227,7 @@ function addUnit(nodeChar, nodeUnit)
 end
 
 function isCohort(vRecord)
-	local rActor = ActorManager.resolveActor(vRecord);
+	local rActor = getActorSafe(vRecord);
 	
 	if rActor and rActor.sCreatureNode and rActor.sCreatureNode:match("%.cohorts%.") then
 		return true;
@@ -219,12 +237,12 @@ function isCohort(vRecord)
 end
 
 function notifyAddHolderOwnership(node, sUserName, bOwner, bForceAccessRemoval)
-	local rActor = ActorManager.resolveActor(node);
+	local rActor = getActorSafe(node);
 	if isCohort(rActor) then
 		if bOwner then
 			ChatManager.SystemMessage(Interface.getString("assistant_gm_cohort_ownership"));
 		end
-	else
+	elseif notifyAddHolderOwnershipOriginal then
 		notifyAddHolderOwnershipOriginal(node, sUserName, bOwner, bForceAccessRemoval);
 	end
 end
@@ -238,5 +256,7 @@ function levelUpCohort(nodeCohort)
 	if HpManager then
 		HpManager.updateNpcHitDice(nodeCohort);
 	end
-	HpManagerFZ.updateNpcHitPoints(nodeCohort);
+	if HpManagerFZ then
+		HpManagerFZ.updateNpcHitPoints(nodeCohort);
+	end
 end
